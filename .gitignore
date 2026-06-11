@@ -1,0 +1,20 @@
+# --- Sırlar / Secrets (ASLA commit etme) ---
+config/
+*.token
+*token*.txt
+api_token*
+
+# --- Yakalanan veri / Captured data (kişisel) ---
+data/
+logs/
+*.log
+.screenpipe/
+
+# --- Üretilen launchd plist (kullanıcıya özel mutlak yollar) ---
+*.generated.plist
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
