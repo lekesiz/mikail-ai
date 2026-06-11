@@ -19,8 +19,14 @@ API keys and personal data. It is meant to run **only on your own machine**.
 - All data stays local in `~/.screenpipe/` (SQLite). Nothing is uploaded.
 - The API binds to `127.0.0.1` only.
 - **Enable FileVault** (full-disk encryption) before using — the installer checks this.
-- Secrets are stored in the OS keychain (`--encrypt-secrets`).
+- Secrets are stored in the OS keychain (`--encrypt-secrets`). Note: captured OCR/key/clipboard
+  text itself is stored in plain text in the local DB — full-disk encryption is the protection.
+- Telemetry is **off** (`--disable-telemetry`) — no error reports leave the machine.
 - Capture auto-pauses on DRM apps / banking streams (`--pause-on-drm-content`).
+- macOS re-asks for Screen Recording approval roughly every 90 days — if the prompt appears,
+  click **"Continue to Allow"**, otherwise capture silently stops.
+- Recommended: `chmod 700 ~/.screenpipe` and `tmutil addexclusion ~/.screenpipe`
+  (keep keystroke data out of group access and Time Machine backups).
 - This repo contains **no captured data and no tokens** — those are git-ignored.
 
 ---
