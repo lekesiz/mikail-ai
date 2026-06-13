@@ -92,7 +92,8 @@ tail -f logs/capture.out.log                # logs
 
 Edit `scripts/start-capture.sh`:
 
-- **Languages**: `LANGS=(-l english)` → add `-l turkish -l french` etc. for OCR.
+- **Languages**: put space-separated names in `config/languages.conf`
+  (e.g. `turkish french english`); defaults to english. (This file is git-ignored.)
 - **Retention**: `--retention-days 30` (media auto-deleted; OCR text kept forever).
 - **Audio**: off by default. To enable meeting transcription, see
   [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md#optional-audio--meeting-transcription).
