@@ -43,9 +43,15 @@ if ! npm ls -g screenpipe >/dev/null 2>&1; then
   say "Installing screenpipe (npm global)"; npm install -g screenpipe || die "screenpipe install failed"
 fi
 NPM_ROOT="$(npm root -g 2>/dev/null)"
-SP_BIN_PATH="$(ls "$NPM_ROOT"/screenpipe/node_modules/@screenpipe/cli-darwin-*/bin/screenpipe 2>/dev/null | head -1)"
-[ -n "$SP_BIN_PATH" ] || SP_BIN_PATH="$(command -v screenpipe)"
+# Architecture-explicit: arm64 vs x64 — avoids picking the wrong arch if both dirs exist
+ARCH="$(uname -m)"; [ "$ARCH" = "x86_64" ] && ARCH="x64"
+SP_BIN_PATH="$NPM_ROOT/screenpipe/node_modules/@screenpipe/cli-darwin-$ARCH/bin/screenpipe"
+[ -x "$SP_BIN_PATH" ] || SP_BIN_PATH="$(ls "$NPM_ROOT"/screenpipe/node_modules/@screenpipe/cli-darwin-*/bin/screenpipe 2>/dev/null | head -1)"
 [ -n "$SP_BIN_PATH" ] || die "screenpipe binary not resolved after install."
+# Must be the native Mach-O binary, NOT the node shim — macOS TCC permissions attach to the
+# Mach-O binary; granting them to the shim (node) would silently break screen/keyboard capture.
+file "$SP_BIN_PATH" 2>/dev/null | grep -q "Mach-O" \
+  || die "Resolved screenpipe is not the native Mach-O binary ($SP_BIN_PATH). TCC permissions would break."
 ok "screenpipe: $("$SP_BIN_PATH" --version 2>/dev/null | head -1)"
 
 # --- 3. Security advisory ---
@@ -59,17 +65,24 @@ fi
 
 # --- 4. Directories + perms ---
 say "Preparing directories"
-mkdir -p "$PROJECT_DIR/logs" "$PROJECT_DIR/config"
+# 700: these hold logs/secrets derived from highly sensitive capture — keep out of group/other read
+mkdir -p -m 700 "$PROJECT_DIR/logs" "$PROJECT_DIR/config"
+chmod 700 "$PROJECT_DIR/logs" "$PROJECT_DIR/config" 2>/dev/null
+[ -d "$HOME/.screenpipe" ] && chmod 700 "$HOME/.screenpipe" 2>/dev/null
 chmod +x "$PROJECT_DIR/scripts/"*.sh
-ok "logs/ and config/ ready"
+ok "logs/ and config/ ready (700)"
 
 # --- 5. Generate + load LaunchAgent ---
 say "Installing LaunchAgent (auto start at login / stop at logout)"
 mkdir -p "$HOME/Library/LaunchAgents"
-sed -e "s|__START_SCRIPT__|$START_SCRIPT|g" \
-    -e "s|__LOG_OUT__|$LOG_OUT|g" \
-    -e "s|__LOG_ERR__|$LOG_ERR|g" \
-    "$PROJECT_DIR/launchd/$LABEL.plist.template" > "$PLIST_DST"
+# XML-escape paths before injecting into the plist (a path with & < > would break XML).
+# Use zsh literal substitution (not sed) so '&' in replacements isn't reinterpreted.
+xmlesc() { print -r -- "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+tpl="$(<"$PROJECT_DIR/launchd/$LABEL.plist.template")"
+tpl="${tpl//__START_SCRIPT__/$(xmlesc "$START_SCRIPT")}"
+tpl="${tpl//__LOG_OUT__/$(xmlesc "$LOG_OUT")}"
+tpl="${tpl//__LOG_ERR__/$(xmlesc "$LOG_ERR")}"
+print -r -- "$tpl" > "$PLIST_DST"
 plutil -lint "$PLIST_DST" >/dev/null || die "Generated plist is invalid."
 launchctl bootout "gui/$UID_NUM/$LABEL" 2>/dev/null
 launchctl bootstrap "gui/$UID_NUM" "$PLIST_DST" 2>/dev/null && ok "agent loaded" || warn "agent load reported an issue (often fine; check status.sh)"

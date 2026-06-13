@@ -23,8 +23,9 @@ except Exception:
 
 DB="$HOME/.screenpipe/db.sqlite"
 if [ -f "$DB" ]; then
+  # -cmd ".timeout 1000": wait up to 1s for WAL lock instead of failing while screenpipe writes
   echo "=== captured so far ==="
-  echo "frames : $(sqlite3 "$DB" 'SELECT count(*) FROM frames;' 2>/dev/null)"
-  echo "ocr    : $(sqlite3 "$DB" 'SELECT count(*) FROM ocr_text;' 2>/dev/null)"
-  echo "ui_evt : $(sqlite3 "$DB" 'SELECT count(*) FROM ui_events;' 2>/dev/null)"
+  echo "frames : $(sqlite3 -cmd ".timeout 1000" "$DB" 'SELECT count(*) FROM frames;' 2>/dev/null)"
+  echo "ocr    : $(sqlite3 -cmd ".timeout 1000" "$DB" 'SELECT count(*) FROM ocr_text;' 2>/dev/null)"
+  echo "ui_evt : $(sqlite3 -cmd ".timeout 1000" "$DB" 'SELECT count(*) FROM ui_events;' 2>/dev/null)"
 fi
