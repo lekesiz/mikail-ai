@@ -36,12 +36,36 @@ API keys and personal data. It is meant to run **only on your own machine**.
 | Layer | What | Status |
 |------|------|--------|
 | 1. Capture | screenpipe: screen + OCR + keyboard + clipboard → local SQLite | ✅ Phase 1 |
-| 2. RAG / Memory | embed activity into a local vector DB for instant recall | 🔜 Phase 2 |
+| 2. RAG / Memory | embed activity into a local vector DB for instant recall | ✅ Phase 2 |
 | 3. Fine-tuning | MLX LoRA on your own data to mimic your style | 🔜 Phase 3 |
 | 4. Interface | a local assistant that talks like you | 🔜 Phase 4 |
 
 The capture engine exposes a REST API at `http://localhost:3030` and a SQLite DB at
 `~/.screenpipe/db.sqlite` — both consumed by the upper layers.
+
+### Phase 2 — RAG / Memory (local)
+
+Incremental ETL embeds captured activity into a **separate** local vector DB
+(`rag/index.db`, sqlite-vec + FTS5) — the capture DB is opened **read-only** and never written.
+
+- **Two record kinds**: `screen` (frames → accessibility_text/OCR, "what I saw") and
+  `typed` (ui_events keyboard/clipboard text, "what I wrote"). Typed events get app/window
+  context from their `frame_id` join, with a nearest-timestamp frame fallback.
+- **Embeddings**: `bge-m3` via Ollama (1024-dim, multilingual TR/FR/EN). Fully local.
+- **Dedup**: exact `content_hash` + consecutive identical text are skipped; consecutive
+  same app+window frames grouped into ~512–700-token session blocks.
+- **Incremental**: `rag/state.json` holds two watermarks (`last_frame_id`, `last_ui_event_id`).
+- **Search**: hybrid FTS5-BM25 + vector, merged with RRF.
+
+```bash
+.venv/bin/python rag/embed_daily.py            # incremental embed (both kinds)
+.venv/bin/python rag/search.py "sorgu" -k 8    # hybrid search
+.venv/bin/python rag/search.py "sorgu" --kind typed   # only "what I wrote"
+```
+
+A nightly LaunchAgent (`com.mikail.ai.embed`, 03:30) runs the incremental embed from the
+watermarks. Index files (`rag/index.db*`, `rag/state.json`) are git-ignored (personal data);
+only the generic ETL/search code is shareable.
 
 ---
 
@@ -103,7 +127,7 @@ Edit `scripts/start-capture.sh`:
 ## Roadmap
 
 - [x] **Phase 1** — Capture layer + auto start/stop + permissions
-- [ ] **Phase 2** — RAG memory (local vector DB over captured activity)
+- [x] **Phase 2** — RAG memory (local vector DB over captured activity)
 - [ ] **Phase 3** — MLX LoRA fine-tuning pipeline from your own data
 - [ ] **Phase 4** — Local "clone" chat assistant
 

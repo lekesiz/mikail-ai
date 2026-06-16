@@ -10,13 +10,27 @@ logs/
 *.log
 .screenpipe/
 
+# --- Phase 2 RAG: vektör index + watermark KİŞİSEL veri içerir (ASLA commit etme) ---
+rag/index.db
+rag/index.db-*
+rag/*.db-wal
+rag/*.db-shm
+rag/state.json
+rag/state.json.bak
+rag/.embed.lock
+.venv/
+
+# --- Python bytecode ---
+__pycache__/
+*.pyc
+
 # --- Üretilen launchd plist (kullanıcıya özel mutlak yollar) ---
 *.generated.plist
 
 # --- Kişisel sistem dokümanları / Private system docs (yerel kalır) ---
 AUDIT-*.md
 TODO.md
-PHASE2-PLAN.md
+PHASE*-PLAN.md
 
 # --- OS / editor ---
 .DS_Store

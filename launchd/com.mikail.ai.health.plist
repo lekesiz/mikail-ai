@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.mikail.ai.health</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/mikail/mikail-ai/scripts/health-snapshot.sh</string>
+    </array>
+
+    <!-- Her gün 09:13'te günlük sağlık kaydı -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>9</integer>
+        <key>Minute</key><integer>13</integer>
+    </dict>
+
+    <!-- Yüklenince hemen çalıştırma; sadece zamanlanan saatte -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/mikail/mikail-ai/logs/health.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/mikail/mikail-ai/logs/health.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

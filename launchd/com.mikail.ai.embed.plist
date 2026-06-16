@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.mikail.ai.embed</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/mikail/mikail-ai/scripts/embed-nightly.sh</string>
+    </array>
+
+    <!-- Her gece 03:30'da Phase 2 RAG artımlı gömme -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>3</integer>
+        <key>Minute</key><integer>30</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Düşük öncelik: gece batch, kullanıcı işini etkilemesin -->
+    <key>ProcessType</key>
+    <string>Background</string>
+    <key>Nice</key>
+    <integer>10</integer>
+    <key>LowPriorityIO</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/mikail/mikail-ai/logs/embed.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/mikail/mikail-ai/logs/embed.err.log</string>
+</dict>
+</plist>
