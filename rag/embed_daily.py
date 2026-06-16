@@ -263,6 +263,23 @@ def nearest_frame_ctx(src, ts, window_min=5):
     return min(cands, key=lambda c: c["d"]) if cands else None
 
 
+# Phase 1 capture bug onarımı: AZERTY klavyede yazılan metin screenpipe'ta US-QWERTY
+# konumu olarak decode ediliyor (fiziksel tuş -> yanlış karakter). Ters konum eşlemesi.
+# Doğrulandı (06-16): ";ikqil QI"->"mikail AI", "netwinfor;qti"->"netzinformati",
+# "tuhqf biwe qit ol;qyqn"->"tuhaf bize ait olmayan". translate eşzamanlı -> a<->q güvenli.
+_AZERTY_FIX = str.maketrans({
+    "q": "a", "a": "q", "z": "w", "w": "z",
+    "Q": "A", "A": "Q", "Z": "W", "W": "Z",
+    ";": "m", "m": ",", ",": ";",          # ; -> m -> , -> ; (3-döngü, eşzamanlı)
+    "M": "?", "<": ".", ">": "/",
+})
+
+
+def deazerty(text):
+    """AZERTY->QWERTY decode bug'ını geri çevir (yalnız klavye 'typed' metnine uygulanır)."""
+    return text.translate(_AZERTY_FIX)
+
+
 def build_ui_chunks(src, rows):
     """Ardışık aynı app+window typed-event'leri oturum bloğuna grupla."""
     chunks = []
@@ -276,7 +293,7 @@ def build_ui_chunks(src, rows):
 
     last_text = None
     for r in rows:
-        txt = (r["text_content"] or "").strip()
+        txt = deazerty((r["text_content"] or "").strip())   # AZERTY decode bug onarımı
         if len(txt) < MIN_TEXT_LEN or txt == last_text:
             continue
         last_text = txt
